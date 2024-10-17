@@ -51,10 +51,10 @@ func WalkingSpentCalories(action int, duration, weight, height float64) float64 
 	// Преобразуем скорость из км/ч в м/с
 	speedMS := meanSpeed(action, duration) * kmhInMsec
 	// Преобразуем рост в метры
-	heightM := height / 100
+	heightM := height / cmInM
 
 	// Формула для расчета калорий
-	calories := (0.035*weight + math.Pow(speedMS, 2)/heightM*0.029*weight) * duration * 60
+	calories := (walkingCaloriesWeightMultiplier*weight + math.Pow(speedMS, 2)/heightM*walkingSpeedHeightMultiplier*weight) * duration * minInH
 	return calories
 }
 
