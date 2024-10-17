@@ -2,6 +2,7 @@ package ftracker
 
 import (
 	"fmt"
+	"math"
 )
 
 // Основные константы, необходимые для расчетов.
@@ -47,8 +48,14 @@ const (
 
 // WalkingSpentCalories возвращает количество потраченных калорий при ходьбе.
 func WalkingSpentCalories(action int, duration, weight, height float64) float64 {
-	speed := meanSpeed(action, duration) * kmhInMsec // Convert km/h to m/s
-	return ((walkingCaloriesWeightMultiplier * weight) + ((speed*speed)/height)*walkingSpeedHeightMultiplier*weight) * duration * minInH
+	// Преобразуем скорость из км/ч в м/с
+	speedMS := meanSpeed(action, duration) * kmhInMsec
+	// Преобразуем рост в метры
+	heightM := height / 100
+
+	// Формула для расчета калорий
+	calories := (0.035*weight + math.Pow(speedMS, 2)/heightM*0.029*weight) * duration * 60
+	return calories
 }
 
 // Константы для расчета калорий, расходуемых при плавании.
@@ -74,27 +81,23 @@ func SwimmingSpentCalories(lengthPool, countPool int, duration, weight float64) 
 
 // ShowTrainingInfo возвращает строку с информацией о тренировке.
 func ShowTrainingInfo(action int, trainingType string, duration, weight, height float64, lengthPool, countPool int) string {
-	var dist, speed, calories float64
-
-	switch trainingType {
-	case "Бег":
-		dist = distance(action)
-		speed = meanSpeed(action, duration)
-		calories = RunningSpentCalories(action, weight, duration)
-	case "Ходьба":
-		dist = distance(action)
-		speed = meanSpeed(action, duration)
-		calories = WalkingSpentCalories(action, duration, weight, height)
-	case "Плавание":
-		dist = float64(lengthPool*countPool) / mInKm
-		speed = swimmingMeanSpeed(lengthPool, countPool, duration)
-		calories = SwimmingSpentCalories(lengthPool, countPool, duration, weight)
+	switch {
+	case trainingType == "Бег":
+		distance := distance(action)
+		speed := meanSpeed(action, duration)
+		calories := RunningSpentCalories(action, weight, duration)
+		return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n", trainingType, duration, distance, speed, calories)
+	case trainingType == "Ходьба":
+		distance := distance(action)
+		speed := meanSpeed(action, duration)
+		calories := WalkingSpentCalories(action, duration, weight, height)
+		return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n", trainingType, duration, distance, speed, calories)
+	case trainingType == "Плавание":
+		distance := distance(action)
+		speed := swimmingMeanSpeed(lengthPool, countPool, duration)
+		calories := SwimmingSpentCalories(lengthPool, countPool, duration, weight)
+		return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n", trainingType, duration, distance, speed, calories)
 	default:
 		return "неизвестный тип тренировки"
 	}
-
-	return fmt.Sprintf(
-		"Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n",
-		trainingType, duration, dist, speed, calories,
-	)
 }
